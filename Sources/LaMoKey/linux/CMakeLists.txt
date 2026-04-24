@@ -27,13 +27,21 @@ include_directories(
     ../engine
 )
 
+# Generate version constants for the Linux update checker
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/version_config.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 add_library(lamokey MODULE ${ENGINE_SOURCES} ${CLIENT_SOURCES})
 
 target_link_libraries(lamokey Fcitx5::Core Fcitx5::Config)
 set_target_properties(lamokey PROPERTIES PREFIX "")
 
+add_executable(lamokey_update_check update_check.cpp)
+target_include_directories(lamokey_update_check PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
 # Install rules
 install(TARGETS lamokey DESTINATION ${FCITX5_INSTALL_ADDONDIR})
+install(TARGETS lamokey_update_check DESTINATION bin)
 install(FILES fcitx5-lamokey/lamokey-addon.conf.in.in DESTINATION ${FCITX5_INSTALL_ADDONDIR})
 install(FILES fcitx5-lamokey/lamokey.conf.in DESTINATION ${FCITX5_INSTALL_INPUTMETHODDIR})
 

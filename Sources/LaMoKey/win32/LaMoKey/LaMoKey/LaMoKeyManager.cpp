@@ -1,4 +1,4 @@
-﻿/*----------------------------------------------------------
+/*----------------------------------------------------------
 LaMoKey - The Cross platform Open source Vietnamese Keyboard application.
 
 Copyright (C) 2019 Mai Vu Tuyen
@@ -52,7 +52,7 @@ void LaMoKeyManager::freeEngine() {
 }
 
 bool LaMoKeyManager::checkUpdate(string& newVersion) {
-	wstring dataW = LaMoKeyHelper::getContentOfUrl(L"https://raw.githubusercontent.com/tuyenvm/LaMoKey/master/version.json");
+	wstring dataW = LaMoKeyHelper::getContentOfUrl(L"https://raw.githubusercontent.com/tuannda98/LaMoKey/main/version.json");
 	string data = wideStringToUtf8(dataW);
 
 	//simple parse
