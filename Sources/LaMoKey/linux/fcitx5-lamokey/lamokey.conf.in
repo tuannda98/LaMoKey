@@ -1,0 +1,7 @@
+[InputMethod]
+Name=LaMoKey
+Icon=lamokey
+Label=VN
+LangCode=vi
+Addon=lamokey
+Configurable=True

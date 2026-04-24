@@ -1,0 +1,7 @@
+[Addon]
+Name=LaMoKey
+Category=InputMethod
+Library=lamokey
+Type=SharedLibrary
+OnDemand=True
+Configurable=True
