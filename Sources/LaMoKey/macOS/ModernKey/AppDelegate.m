@@ -10,6 +10,7 @@
 #import <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #import <ServiceManagement/ServiceManagement.h>
+#import <libproc.h>
 #import "AppDelegate.h"
 #import "ViewController.h"
 #import "LaMoKeyManager.h"
@@ -119,10 +120,19 @@ extern bool convertToolDontAlertWhenCompleted;
                                               forKey: @"NSInitialToolTipDelay"];
     
     //check whether this app has been launched before that or not
-    NSArray* runningApp = [[NSWorkspace sharedWorkspace] runningApplications];
-    if ([runningApp containsObject:LAMOKEY_BUNDLE]) { //if already running -> exit
-        [NSApp terminate:nil];
-        return;
+    uid_t currentUID = getuid();
+    NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+    for (NSRunningApplication* app in runningApps) {
+        if ([[app bundleIdentifier] isEqualToString:LAMOKEY_BUNDLE]) {
+            pid_t pid = [app processIdentifier];
+            struct proc_bsdinfo procInfo;
+            if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &procInfo, PROC_PIDTBSDINFO_SIZE) > 0) {
+                if (procInfo.pbi_uid == currentUID) {
+                    [NSApp terminate:nil];
+                    return;
+                }
+            }
+        }
     }
     
     // check if user granted Accessabilty permission

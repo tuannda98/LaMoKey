@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import <libproc.h>
 
 @interface AppDelegate ()
 
@@ -16,8 +17,22 @@
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    NSArray* runningApp = [[NSWorkspace sharedWorkspace] runningApplications];
-    if (![runningApp containsObject:@"com.tuyenmai.lamokey"]) {
+    uid_t currentUID = getuid();
+    bool mainAppRunning = false;
+    NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+    for (NSRunningApplication* app in runningApps) {
+        if ([[app bundleIdentifier] isEqualToString:@"com.tuyenmai.lamokey"]) {
+            pid_t pid = [app processIdentifier];
+            struct proc_bsdinfo procInfo;
+            if (proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &procInfo, PROC_PIDTBSDINFO_SIZE) > 0) {
+                if (procInfo.pbi_uid == currentUID) {
+                    mainAppRunning = true;
+                    break;
+                }
+            }
+        }
+    }
+    if (!mainAppRunning) {
         NSString* path = [[NSBundle mainBundle] bundlePath];
         for (int i = 0; i < 4; i++)
             path = [path stringByDeletingLastPathComponent];

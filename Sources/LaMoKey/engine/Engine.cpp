@@ -1101,7 +1101,7 @@ void handleMainKey(const Uint16& data, const bool& isCaps) {
     }
     
     //if is mark key
-    if (IS_MARK_KEY(data)) {
+    if (IS_MARK_KEY(data) && !isCaps) {
         for (i = 0; i < _vowelForMark.size(); i++) {
             vector<vector<Uint16>>& charset = _vowelForMark[i];
             isCorect = false;
@@ -1151,6 +1151,30 @@ void handleMainKey(const Uint16& data, const bool& isCaps) {
         }
     }
     
+    //check if can add new vowel
+    findAndCalculateVowel();
+    if (vowelCount > 0 && vowelEndIndex < _index) {
+        //has vowel, check if can combine
+        vector<vector<Uint32>>& vowelSet = _vowelCombine[CHR(vowelStartIndex)];
+        for (auto& combination : vowelSet) {
+            if (combination[0] == 1 && combination.size() == vowelCount + 1) {
+                //can combine, check if matches
+                bool match = true;
+                for (size_t idx = 1; idx < combination.size(); ++idx) {
+                    if (idx - 1 >= vowelCount || (CHR(vowelStartIndex + idx - 1) | (TypingWord[vowelStartIndex + idx - 1] & TONEW_MASK) | (TypingWord[vowelStartIndex + idx - 1] & TONE_MASK)) != combination[idx]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match && data == KEY_A) { //for now, only handle adding 'a'
+                    //add new vowel
+                    insertKey(data, isCaps);
+                    return;
+                }
+            }
+        }
+    }
+    
     keyForAEO = ((vInputType != vVNI) ? data : ((data == KEY_7 || data == KEY_8 ? KEY_W : (data == KEY_6 ? TypingWord[VEI] : data))));
     vector<vector<Uint16>>& charset = _vowel[keyForAEO];
     isCorect = false;
@@ -1165,7 +1189,20 @@ void handleMainKey(const Uint16& data, const bool& isCaps) {
         if (isCorect) {
             isChanged = true;
             if (IS_KEY_DOUBLE(data)) {
-                insertAOE(keyForAEO, isCaps);
+                //check if vowel already has tone, if yes, add new vowel instead
+                findAndCalculateVowel();
+                bool hasTone = false;
+                for (int idx = VSI; idx <= VEI; ++idx) {
+                    if (TypingWord[idx] & (TONE_MASK | TONEW_MASK)) {
+                        hasTone = true;
+                        break;
+                    }
+                }
+                if (hasTone) {
+                    insertKey(data, isCaps);
+                } else {
+                    insertAOE(keyForAEO, isCaps);
+                }
             } else if (IS_KEY_W(data)) {
                 if (vInputType == vVNI) {
                     for (j = _index-1; j >= 0; j--) {
@@ -1530,7 +1567,7 @@ void vKeyHandleEvent(const vKeyEvent& event,
             }
         }
         
-        if (vUpperCaseFirstChar) {
+        if (vUpperCaseFirstChar && !tempDisableKey) {
             if (_index == 1 && _upperCaseStatus == 2) {
                 upperCaseFirstCharacter();
             }
